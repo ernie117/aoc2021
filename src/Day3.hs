@@ -32,36 +32,35 @@ calculatePower xs = gamma * epsilon
     gamma = bin2int xs
     epsilon = bin2int $ flipBits xs
 
-solution1 :: [[Int]] -> Int
-solution1 = calculatePower . process
-
-getMostOrOne :: [String] -> Char
-getMostOrOne [zeros, ones]
-  | length zeros > length ones = '0'
-  | length zeros == length ones = '1'
-  | otherwise = '1'
-
-getFewestOrZero :: [String] -> Char
-getFewestOrZero [zeros, ones]
-  | length zeros > length ones = '1'
-  | length zeros == length ones = '0'
-  | otherwise = '0'
-
-getThings :: [String] -> ([String] -> Char) -> String
-getThings = go 0
+getBinaryNumber :: [String] -> ([Int] -> Int) -> String
+getBinaryNumber = go 0
   where
     go _ [s] _ = s
-    go idx ls g = go (succ idx) (filter (\l -> mostCommon == l !! idx) ls) g
+    go idx ls g = go (succ idx) (filter (\l -> l !! idx == mostCommon) ls) g
       where
-        columns = map (group . sort) $ transpose ls
-        columnOfInterest = columns !! idx
-        mostCommon = g columnOfInterest
+        mostCommon = intToDigit $ mostCommonAtIndex g idx ls
+
+mostCommon :: [Int] -> Int
+mostCommon xs
+  | 2 * sum xs >= length xs = 1
+  | otherwise = 0
+
+leastCommon :: [Int] -> Int
+leastCommon xs
+  | 2 * sum xs < length xs = 1
+  | otherwise = 0
+
+mostCommonAtIndex :: ([Int] -> Int) -> Int -> [String] -> Int
+mostCommonAtIndex g idx = g . map digitToInt . flip (!!) idx . transpose
+
+solution1 :: [[Int]] -> Int
+solution1 = calculatePower . process
 
 solution2 :: [String] -> Int
 solution2 ls = oxygen * co2
   where
-    oxygen = bin2int $ map digitToInt $ getThings ls getMostOrOne
-    co2 = bin2int $ map digitToInt $ getThings ls getFewestOrZero
+    oxygen = bin2int $ map digitToInt $ getBinaryNumber ls mostCommon
+    co2 = bin2int $ map digitToInt $ getBinaryNumber ls leastCommon
 
 -- Part 1 answer = 3885894
 -- Part 1 answer = 3775 * 1159 == 4375225
