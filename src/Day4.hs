@@ -6,9 +6,6 @@ import Data.Function
 import Data.List
 import Data.Maybe
 
-allAlphas :: String -> Bool
-allAlphas s = all (`elem` s) ['a' .. 'z']
-
 type BingoCard = [[Int]]
 
 getInput :: IO [String]
