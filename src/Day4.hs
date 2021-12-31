@@ -7,86 +7,96 @@ import Data.List
 import Data.List.Split
 import Data.Maybe
 
-type BingoCard = [[Int]]
+type BingoCard = [[Maybe Int]]
+
+data Game =
+  Game
+    { draws :: [Int]
+    , players :: [Player]
+    }
+  deriving (Show, Eq)
+
+data Player =
+  Player
+    { lastNumber :: Int
+    , bingoCard :: BingoCard
+    }
+  deriving (Show, Eq)
 
 getInput :: IO [String]
-getInput = fmap lines (readFile "input/input-day4.txt")
+getInput = fmap lines (readFile "input/test4.txt")
 
 bingoNumbers :: [String] -> [Int]
 bingoNumbers = map read . splitOn "," . head
 
-makeCard :: [String] -> BingoCard
-makeCard = map row
+getGame :: [String] -> Game
+getGame ss = Game (bingoNumbers ss) (makePlayers (tail $ tail ss))
+
+makePlayers :: [String] -> [Player]
+makePlayers ss = map makePlayer (splitOn [""] ss)
+
+makePlayer :: [String] -> Player
+makePlayer ss =
+  Player 0 (map (map (Just . read) . filter (not . null) . splitOn " ") ss)
+
+remove :: Int -> [Maybe Int] -> [Maybe Int]
+remove x e = result
   where
-    row = map read . filter (not . null) . splitOn " "
+    present = elemIndex (Just x) e
+    result =
+      case present of
+        Nothing -> e
+        (Just i) -> one ++ [Nothing] ++ tail two
+          where (one, two) = splitAt i e
 
-numsAndCards :: [String] -> ([Int], [BingoCard])
-numsAndCards ss = (bingoNumbers ss, makeCards (tail $ tail ss))
+mark :: Int -> [Maybe Int] -> [Maybe Int]
+mark x r =
+  if Just x `elem` r
+    then remove x r
+    else r
 
-makeCards :: [String] -> [BingoCard]
-makeCards ls = map makeCard (splitOn [""] ls)
+markCard' :: Int -> Player -> Player
+markCard' x g = Player x (map (mark x) (bingoCard g))
 
+markCards' :: Int -> [Player] -> [Player]
+markCards' x = map (markCard' x)
+
+scorePlayer :: Player -> Int
+scorePlayer g = lastNumber g * sum' g
+  where
+    sum' p = sum $ map (sum . catMaybes) (bingoCard p)
+
+draw :: Int -> Game -> Game
+draw i g = Game (draws g) (markCards' i (players g))
+
+-- playGame :: Game -> Game
+-- playGame g = Game dss completedPlayers
+--   where
+--     dss = draws g
+--     completedPlayers = takeWhile (isWonG) (map (markCard' dss) (players g))
+-- solve' :: Game -> Int
+-- solve' = scorePlayer . head . filter isWonG . players . playGame
 checkRows :: BingoCard -> Bool
-checkRows = (not . null) . concat . filter (all (== -1))
+checkRows = (not . null) . concat . filter (all isNothing)
 
-replace :: Int -> [Int] -> [Int]
-replace x e = one ++ [-1] ++ tail two
-  where
-    (one, two) = splitAt (fromJust (elemIndex x e)) e
-
-data Result =
-  Result
-    { winningNumber :: Int
-    , count :: Int
-    , bingoCard :: BingoCard
-    }
-  deriving (Show)
-
-mapResults :: ([Int], [BingoCard]) -> [Result]
-mapResults (xs, bs) = map (markCard xs) bs
-
--- something like:
--- until checkStuff markCard card
-
-isWon :: BingoCard -> Bool
-isWon c = checkRows c || checkRows (transpose c)
-
-markCard :: [Int] -> BingoCard -> Result
-markCard x b = go x b 0 0
-  where
-    go l c wn count
-      | isWon c =
-        Result {winningNumber = wn, count = count, bingoCard = c}
-      | null l && (checkRows c || checkRows (transpose c)) =
-        Result {winningNumber = 0, count = count, bingoCard = c}
-      | null l = Result {winningNumber = 0, count = count, bingoCard = c}
-      | otherwise =
-        go
-          (tail l)
-          (map
-             (\e ->
-                if head l `elem` e
-                  then replace (head l) e
-                  else e)
-             c)
-          (head l)
-          (succ count)
-
-solve :: [Result] -> Int
-solve xs = winningNumber winner * sumCard (bingoCard winner)
-  where
-    winner = maximumBy (compare `on` count) xs
-
-sumCard :: BingoCard -> Int
-sumCard b = sum $ map sum filtered
-  where
-    filtered = map (filter (/= (-1))) b
+isWonG :: Player -> Bool
+isWonG g = checkRows (bingoCard g) || checkRows (transpose (bingoCard g))
 
 -- Part I solution: 87456
 -- Part II solution: 15561
 main :: IO ()
-main = do
-  getInput >>= print . solve . mapResults . numsAndCards
-  -- input <- getInput
-  -- let stuff = makeCards (tail input)
-  -- print stuff
+main
+  -- getInput >>= print . solve . mapResults . numsAndCards
+ = do
+  getInput >>=
+    print .
+    scorePlayer .
+    head .
+    filter isWonG .
+    players .
+    draw 24 .
+    draw 21 .
+    draw 14 .
+    draw 0 .
+    draw 2 .
+    draw 23 . draw 17 . draw 11 . draw 5 . draw 9 . draw 4 . draw 7 . getGame
