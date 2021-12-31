@@ -2,3 +2,5 @@ packages:
 - .
 resolver:
   compiler: ghc-9.0.1
+extra-deps:
+  - split-0.2.3.4

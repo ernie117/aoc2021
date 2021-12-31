@@ -4,6 +4,7 @@ import Control.Monad
 import Data.Char
 import Data.Function
 import Data.List
+import Data.List.Split
 import Data.Maybe
 
 type BingoCard = [[Int]]
@@ -12,35 +13,18 @@ getInput :: IO [String]
 getInput = fmap lines (readFile "input/input-day4.txt")
 
 bingoNumbers :: [String] -> [Int]
-bingoNumbers = map read . splitString (== ',') . head
-
-splitString :: (Char -> Bool) -> String -> [String]
-splitString f s =
-  if snd broken == ""
-    then [fst broken]
-    else fst broken : splitString f (snd broken)
-  where
-    broken = break f (dropWhile f s)
+bingoNumbers = map read . splitOn "," . head
 
 makeCard :: [String] -> BingoCard
 makeCard = map row
   where
-    row = map read . splitString isSpace
+    row = map read . filter (not . null) . splitOn " "
 
 numsAndCards :: [String] -> ([Int], [BingoCard])
 numsAndCards ss = (bingoNumbers ss, makeCards (tail $ tail ss))
 
 makeCards :: [String] -> [BingoCard]
-makeCards ls = map makeCard (separate ls)
-
-separate :: [String] -> [[String]]
-separate [] = []
-separate [x] = [[x]]
-separate xs = fst spanned : separate (rest $ snd spanned)
-  where
-    spanned = span (/= "") xs
-    rest [] = []
-    rest rs = tail $ snd spanned
+makeCards ls = map makeCard (splitOn [""] ls)
 
 checkRows :: BingoCard -> Bool
 checkRows = (not . null) . concat . filter (all (== -1))
@@ -61,11 +45,17 @@ data Result =
 mapResults :: ([Int], [BingoCard]) -> [Result]
 mapResults (xs, bs) = map (markCard xs) bs
 
+-- something like:
+-- until checkStuff markCard card
+
+isWon :: BingoCard -> Bool
+isWon c = checkRows c || checkRows (transpose c)
+
 markCard :: [Int] -> BingoCard -> Result
 markCard x b = go x b 0 0
   where
     go l c wn count
-      | checkRows c || checkRows (transpose c) =
+      | isWon c =
         Result {winningNumber = wn, count = count, bingoCard = c}
       | null l && (checkRows c || checkRows (transpose c)) =
         Result {winningNumber = 0, count = count, bingoCard = c}
@@ -97,3 +87,6 @@ sumCard b = sum $ map sum filtered
 main :: IO ()
 main = do
   getInput >>= print . solve . mapResults . numsAndCards
+  -- input <- getInput
+  -- let stuff = makeCards (tail input)
+  -- print stuff
