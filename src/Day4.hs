@@ -9,22 +9,28 @@ type Row = [Maybe Int]
 
 type BingoCard = [Row]
 
+type Draws = [Int]
+
+type Players = [Player]
+
+type LastDraw = Int
+
 data Game =
-  Game [Int] [Player]
+  Game Draws Players
   deriving (Show, Eq)
 
 data Player =
-  Player Int BingoCard
+  Player LastDraw BingoCard
   deriving (Show, Eq)
 
 getInput :: IO [String]
 getInput = fmap lines (readFile "input/input-day4.txt")
 
-bingoNumbers :: [String] -> [Int]
-bingoNumbers = map read . splitOn "," . head
+getDraws :: [String] -> [Int]
+getDraws = map read . splitOn "," . head
 
 getGame :: [String] -> Game
-getGame ss = Game (bingoNumbers ss) (makePlayers (tail $ tail ss))
+getGame ss = Game (getDraws ss) (makePlayers (tail $ tail ss))
 
 makePlayers :: [String] -> [Player]
 makePlayers ss = map makePlayer (splitOn [""] ss)
@@ -45,10 +51,22 @@ drawNumber :: Game -> Game
 drawNumber (Game (d:ds) ps) = Game ds (markCards d ps)
 
 checkRows :: BingoCard -> Bool
-checkRows = (not . null) . concat . filter (all isNothing)
+checkRows = any (all isNothing)
 
 gameIsWon :: Game -> Bool
 gameIsWon (Game _ ps) = any winningPlayer ps
+
+lastWinner :: Game -> Bool
+lastWinner (Game _ ps) = all winningPlayer ps && length ps == 1
+
+removeWinners :: Game -> Game
+removeWinners (Game (d:ds) ps) = Game ds filtered
+  where
+    marked = markCards d ps
+    filtered =
+      if any winningPlayer ps
+        then filter (not . winningPlayer) marked
+        else marked
 
 winningPlayer :: Player -> Bool
 winningPlayer (Player _ card) = checkRows card || checkRows (transpose card)
@@ -59,9 +77,13 @@ getWinner (Game _ ps) = fromJust $ find winningPlayer ps
 solve1 :: Game -> Int
 solve1 = scorePlayer . getWinner . until gameIsWon drawNumber
 
+solve2 :: Game -> Int
+solve2 = scorePlayer . getWinner . until lastWinner removeWinners
+
 -- Test input solution: 4512
 -- Part I solution: 87456
 -- Part II solution: 15561
 main :: IO ()
 main = do
   getInput >>= print . solve1 . getGame
+  getInput >>= print . solve2 . getGame
