@@ -60,13 +60,10 @@ lastWinner :: Game -> Bool
 lastWinner (Game _ ps) = all winningPlayer ps && length ps == 1
 
 removeWinners :: Game -> Game
-removeWinners (Game (d:ds) ps) = Game ds filtered
+removeWinners (Game (d:ds) [p]) = Game ds (markCards d [p])
+removeWinners (Game (d:ds) ps) = Game ds marked
   where
-    marked = markCards d ps
-    filtered =
-      if any winningPlayer ps
-        then filter (not . winningPlayer) marked
-        else marked
+    marked = filter (not . winningPlayer) (markCards d ps)
 
 winningPlayer :: Player -> Bool
 winningPlayer (Player _ card) = checkRows card || checkRows (transpose card)
