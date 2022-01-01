@@ -1,10 +1,8 @@
 module Day4 where
 
-import Control.Monad
-import Data.Char
-import Data.Function
+import Control.Monad (mfilter)
 import Data.List
-import Data.List.Split
+import Data.List.Split (splitOn)
 import Data.Maybe
 
 type Row = [Maybe Int]
@@ -12,17 +10,11 @@ type Row = [Maybe Int]
 type BingoCard = [Row]
 
 data Game =
-  Game
-    { draws :: [Int]
-    , players :: [Player]
-    }
+  Game [Int] [Player]
   deriving (Show, Eq)
 
 data Player =
-  Player
-    { lastNumber :: Int
-    , bingoCard :: BingoCard
-    }
+  Player Int BingoCard
   deriving (Show, Eq)
 
 getInput :: IO [String]
@@ -39,35 +31,30 @@ makePlayers ss = map makePlayer (splitOn [""] ss)
   where
     makePlayer ls = Player 0 (map (map (Just . read) . words) ls)
 
-mark :: Int -> Row -> Row
-mark x = map (mfilter (/= x))
-
-markCards' :: Int -> [Player] -> [Player]
-markCards' x g = map (markCard' x) g
+markCards :: Int -> [Player] -> [Player]
+markCards x = map (markCard x)
   where
-    markCard' i g = Player x (map (mark x) (bingoCard g))
+    markCard n (Player _ ps) = Player x (map (map (mfilter (/= n))) ps)
 
 scorePlayer :: Player -> Int
-scorePlayer g = lastNumber g * sum' g
+scorePlayer (Player n card) = n * sum' card
   where
-    sum' p = sum $ concatMap catMaybes (bingoCard p)
+    sum' = sum . concatMap catMaybes
 
 drawNumber :: Game -> Game
-drawNumber g = Game (tail dss) (markCards' (head dss) (players g))
-  where
-    dss = draws g
+drawNumber (Game (d:ds) ps) = Game ds (markCards d ps)
 
 checkRows :: BingoCard -> Bool
 checkRows = (not . null) . concat . filter (all isNothing)
 
 gameIsWon :: Game -> Bool
-gameIsWon g = any isWon (players g)
+gameIsWon (Game _ ps) = any winningPlayer ps
 
-isWon :: Player -> Bool
-isWon p = checkRows (bingoCard p) || checkRows (transpose (bingoCard p))
+winningPlayer :: Player -> Bool
+winningPlayer (Player _ card) = checkRows card || checkRows (transpose card)
 
 getWinner :: Game -> Player
-getWinner = fromJust . find isWon . players
+getWinner (Game _ ps) = fromJust $ find winningPlayer ps
 
 solve1 :: Game -> Int
 solve1 = scorePlayer . getWinner . until gameIsWon drawNumber
