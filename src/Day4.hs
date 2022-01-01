@@ -7,7 +7,9 @@ import Data.List
 import Data.List.Split
 import Data.Maybe
 
-type BingoCard = [[Maybe Int]]
+type Row = [Maybe Int]
+
+type BingoCard = [Row]
 
 data Game =
   Game
@@ -24,7 +26,7 @@ data Player =
   deriving (Show, Eq)
 
 getInput :: IO [String]
-getInput = fmap lines (readFile "input/test4.txt")
+getInput = fmap lines (readFile "input/input-day4.txt")
 
 bingoNumbers :: [String] -> [Int]
 bingoNumbers = map read . splitOn "," . head
@@ -34,26 +36,11 @@ getGame ss = Game (bingoNumbers ss) (makePlayers (tail $ tail ss))
 
 makePlayers :: [String] -> [Player]
 makePlayers ss = map makePlayer (splitOn [""] ss)
-
-makePlayer :: [String] -> Player
-makePlayer ss =
-  Player 0 (map (map (Just . read) . filter (not . null) . splitOn " ") ss)
-
-remove :: Int -> [Maybe Int] -> [Maybe Int]
-remove x e = result
   where
-    present = elemIndex (Just x) e
-    result =
-      case present of
-        Nothing -> e
-        (Just i) -> one ++ [Nothing] ++ tail two
-          where (one, two) = splitAt i e
+    makePlayer ls = Player 0 (map (map (Just . read) . words) ls)
 
-mark :: Int -> [Maybe Int] -> [Maybe Int]
-mark x r =
-  if Just x `elem` r
-    then remove x r
-    else r
+mark :: Int -> Row -> Row
+mark x = map (mfilter (/= x))
 
 markCard' :: Int -> Player -> Player
 markCard' x g = Player x (map (mark x) (bingoCard g))
@@ -64,39 +51,31 @@ markCards' x = map (markCard' x)
 scorePlayer :: Player -> Int
 scorePlayer g = lastNumber g * sum' g
   where
-    sum' p = sum $ map (sum . catMaybes) (bingoCard p)
+    sum' p = sum $ concatMap catMaybes (bingoCard p)
 
-draw :: Int -> Game -> Game
-draw i g = Game (draws g) (markCards' i (players g))
+draw :: Game -> Game
+draw g = Game (tail dss) (markCards' (head dss) (players g))
+  where
+    dss = draws g
 
--- playGame :: Game -> Game
--- playGame g = Game dss completedPlayers
---   where
---     dss = draws g
---     completedPlayers = takeWhile (isWonG) (map (markCard' dss) (players g))
--- solve' :: Game -> Int
--- solve' = scorePlayer . head . filter isWonG . players . playGame
 checkRows :: BingoCard -> Bool
 checkRows = (not . null) . concat . filter (all isNothing)
 
-isWonG :: Player -> Bool
-isWonG g = checkRows (bingoCard g) || checkRows (transpose (bingoCard g))
+isWonG :: Game -> Bool
+isWonG g = any isWon (players g)
 
+isWon :: Player -> Bool
+isWon p = checkRows (bingoCard p) || checkRows (transpose (bingoCard p))
+
+digWinner :: [Game] -> Player
+digWinner = fromJust . find isWon . players . fromJust . find isWonG
+
+solve' :: Game -> Int
+solve' = scorePlayer . digWinner . iterate draw
+
+-- Test input solution: 4512
 -- Part I solution: 87456
 -- Part II solution: 15561
 main :: IO ()
-main
-  -- getInput >>= print . solve . mapResults . numsAndCards
- = do
-  getInput >>=
-    print .
-    scorePlayer .
-    head .
-    filter isWonG .
-    players .
-    draw 24 .
-    draw 21 .
-    draw 14 .
-    draw 0 .
-    draw 2 .
-    draw 23 . draw 17 . draw 11 . draw 5 . draw 9 . draw 4 . draw 7 . getGame
+main = do
+  getInput >>= print . solve' . getGame
