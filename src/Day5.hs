@@ -14,6 +14,10 @@ getCoords :: [String] -> Range
 getCoords =
   concatMap expand . straights . map (map pair . filter (/= "->") . words)
 
+getFullCoords :: [String] -> Range
+getFullCoords =
+  concatMap expand . map (map pair . filter (/= "->") . words)
+
 pair :: String -> Dimensions
 pair = go . splitOn ","
   where
@@ -35,7 +39,8 @@ solve1 = length . filter (>= 2) . map length . group . sort
 
 -- Test data solution: 5
 -- Part I solution: 7414
--- Part II solution: _
+-- Part II solution: 19676
 main :: IO ()
 main = do
   getInput >>= print . solve1 . getCoords
+  getInput >>= print . solve1 . getFullCoords
