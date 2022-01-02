@@ -12,7 +12,7 @@ mapNumbers xs = snd $ minimumBy (compare `on` snd) $ (map doSubtract xs)
   where
     doSubtract i = (i, sum $ map (\x -> abs (i - x)) xs)
 
--- Very slow; found this faster calculation: (diff^2 + diff) `div` 2
+-- Very slow; found this faster calculation: (diff^2 + abs diff) `div` 2
 mapNumbers2 :: [Int] -> Int
 mapNumbers2 xs = snd $ minimumBy (compare `on` snd) $ (map doSubtract xs)
   where
