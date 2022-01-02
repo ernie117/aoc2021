@@ -37,6 +37,8 @@ solve1 m = Map.foldr (+) 0 $ iterate day m !! 80
 solve2 :: LanternMap -> Int
 solve2 m = Map.foldr (+) 0 $ iterate day m !! 256
 
+-- Part I solution: 388739
+-- Part II solution: 1741362314973
 main :: IO ()
 main = do
   getInput >>= print . solve1 . makeMap
