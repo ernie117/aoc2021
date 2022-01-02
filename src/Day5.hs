@@ -15,13 +15,12 @@ getCoords =
   concatMap expand . straights . map (map pair . filter (/= "->") . words)
 
 getFullCoords :: [String] -> Range
-getFullCoords =
-  concatMap expand . map (map pair . filter (/= "->") . words)
+getFullCoords = concatMap (expand . map pair . filter (/= "->") . words)
 
 pair :: String -> Dimensions
 pair = go . splitOn ","
   where
-    go [x, y] = (read x, read y)
+    go [x, y] = (,) (read x) (read y)
 
 straights :: [Range] -> [Range]
 straights = filter (\[(x1, y1), (x2, y2)] -> x1 == x2 || y1 == y2)

@@ -11,4 +11,32 @@ packages:
       sha256: 72c550dd427dc15a2195e16c84bdb4712060fe601d87e95674154b44403550d9
   original:
     hackage: split-0.2.3.4
+- completed:
+    hackage: unordered-containers-0.2.16.0@sha256:859ec9a017e51194755cb8a445b767afc5ce0ac991cd50b0f96abd31b3687aab,5217
+    pantry-tree:
+      size: 1316
+      sha256: e8d877c3c7545bc3d0e5b990466572a39b19f440bbf7a0e1bdde7521176cd12a
+  original:
+    hackage: unordered-containers-0.2.16.0
+- completed:
+    hackage: hashable-1.4.0.1@sha256:c35c9c1adc33bcfa31359e33e4c3db98305406eaa460f0e04d628f2a1de19be5,4804
+    pantry-tree:
+      size: 1248
+      sha256: a1e0d12da785b0c52b8cd755c4aceb75a955ed6d9f3e7c9401aa08c9b2c8032c
+  original:
+    hackage: hashable-1.4.0.1
+- completed:
+    hackage: base-orphans-0.8.6@sha256:eb6758d0160d607e0c45dbd6b196f515b9a589fd4f6d2f926929dd5d56282d37,3175
+    pantry-tree:
+      size: 1272
+      sha256: f889d6903383305688e6e703982bfdc985649b7d4538429e44f98f99d8f73c07
+  original:
+    hackage: base-orphans-0.8.6
+- completed:
+    hackage: ghc-bignum-orphans-0.1.1@sha256:4f6dfb2a191dd3068c2915ba96a1ab3c4b78b4b4e57186698b9ab42007bfa926,1303
+    pantry-tree:
+      size: 278
+      sha256: 4f178ca6b76c9ac961570786f9a2a7c4dd24469d0b5e880386a87643a7fe205e
+  original:
+    hackage: ghc-bignum-orphans-0.1.1
 snapshots: []

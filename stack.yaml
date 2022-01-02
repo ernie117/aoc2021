@@ -4,3 +4,7 @@ resolver:
   compiler: ghc-9.0.1
 extra-deps:
   - split-0.2.3.4
+  - unordered-containers-0.2.16.0
+  - hashable-1.4.0.1
+  - base-orphans-0.8.6
+  - ghc-bignum-orphans-0.1.1
